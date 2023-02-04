@@ -1,0 +1,17 @@
+# Node.js
+node_modules
+.env
+coverage
+coverage.json
+typechain
+typechain-types
+
+# Hardhat
+cache
+artifacts
+
+# Mac
+.DS_Store
+
+# VSCode
+.vscode
