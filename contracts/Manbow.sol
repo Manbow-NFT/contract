@@ -4,7 +4,14 @@ pragma solidity ^0.8.0;
 import "@thirdweb-dev/contracts/base/ERC1155Drop.sol";
 
 contract Manbow is ERC1155Drop {
-    mapping(uint256 => mapping(uint256 => uint256)) public tokenRate;
+    mapping(uint256 => mapping(uint256 => uint256)) public tokenRates;
+
+    event TokensMerged(
+        address indexed merger,
+        uint256 indexed materialTokenId,
+        uint256 indexed productTokenId,
+        uint256 productQuantity
+    );
 
     constructor(
         string memory _name,
@@ -21,40 +28,38 @@ contract Manbow is ERC1155Drop {
             _primarySaleRecipient
         )
     {
-        tokenRate[0][2] = 20;
-        tokenRate[0][4] = 100;
-        tokenRate[2][4] = 5;
+        tokenRates[0][2] = 20;
+        tokenRates[0][4] = 100;
+        tokenRates[2][4] = 5;
     }
 
-    function claim(
-        address _receiver,
-        uint256 _tokenId,
-        uint256 _quantity,
-        address _currency,
-        uint256 _pricePerToken,
-        AllowlistProof calldata _allowlistProof,
-        bytes memory _data
-    ) public payable virtual override {
-        _beforeClaim(_tokenId, _receiver, _quantity, _currency, _pricePerToken, _allowlistProof, _data);
+    function _dropMsgSender() internal view override returns (address) {
+        return msg.sender;
+    }
 
-        ClaimCondition memory condition = claimCondition[_tokenId];
-        bytes32 activeConditionId = conditionId[_tokenId];
+    function merge(
+        address _owner,
+        uint256 _materialId,
+        uint256 _productId,
+        uint256 _productQuantity
+    ) external payable {
+        uint256 burnQuantity = _productQuantity * tokenRates[_materialId][_productId];
+        _beforeMerge(_owner, _materialId, _productId, burnQuantity);
 
-        verifyClaim(_tokenId, _dropMsgSender(), _quantity, _currency, _pricePerToken, _allowlistProof);
+        _burn(_owner, _materialId, burnQuantity);
+        _mint(_owner, _productId, _productQuantity, "");
 
-        // Update contract state.
-        condition.supplyClaimed += _quantity;
-        supplyClaimedByWallet[activeConditionId][_dropMsgSender()] += _quantity;
-        claimCondition[_tokenId] = condition;
+        emit TokensMerged(_owner, _materialId, _productId, _productQuantity);
+    }
 
-        // If there's a price, collect price.
-        _collectPriceOnClaim(address(0), _quantity, _currency, _pricePerToken);
-
-        // Mint the relevant NFTs to claimer.
-        _transferTokensOnClaim(_receiver, _tokenId, _quantity);
-
-        emit TokensClaimed(_dropMsgSender(), _receiver, _tokenId, _quantity);
-
-        _afterClaim(_tokenId, _receiver, _quantity, _currency, _pricePerToken, _allowlistProof, _data);
+    function _beforeMerge(
+        address _owner,
+        uint256,
+        uint256,
+        uint256
+    ) internal view virtual {
+        if (_dropMsgSender() != _owner) {
+            revert("Not eligible");
+        }
     }
 }
