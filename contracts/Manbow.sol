@@ -19,16 +19,4 @@ contract Manbow is ERC1155Drop {
             _primarySaleRecipient
         )
     {}
-
-    function reproduce(
-        address _to,
-        uint256 _amount,
-        bytes memory _data
-    ) external onlyOwner {
-        _mint(_to, 0, _amount, _data);
-    }
-
-    function burn(address _to, uint256 _amount) external onlyOwner {
-        _burn(_to, 0, _amount);
-    }
 }

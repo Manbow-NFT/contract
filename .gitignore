@@ -10,7 +10,7 @@ typechain-types
 cache
 artifacts
 
-# Mac
+# macOS
 .DS_Store
 
 # VSCode
