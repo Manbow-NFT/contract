@@ -50,12 +50,20 @@ contract Manbow is ERC1155Drop {
 
     function _beforeMerge(
         address _owner,
-        uint256,
-        uint256,
-        uint256
+        uint256 _materialId,
+        uint256 _productId,
+        uint256 _productQuantity
     ) internal view virtual {
         if (msg.sender != _owner) {
             revert("Not eligible");
+        }
+
+        if (tokenValues[_materialId] == 0 && tokenValues[_productId] == 0) {
+            revert("token should be alive");
+        }
+
+        if (_productQuantity <= 0) {
+            revert("quantity should be positive");
         }
     }
 }
