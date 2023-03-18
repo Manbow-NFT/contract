@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@thirdweb-dev/contracts/base/ERC1155Drop.sol";
 
 contract Manbow is ERC1155Drop {
-    mapping(uint256 => mapping(uint256 => uint256)) public tokenRates;
+    mapping(uint256 => uint256) public tokenValues;
 
     event TokensMerged(
         address indexed merger,
@@ -28,13 +28,9 @@ contract Manbow is ERC1155Drop {
             _primarySaleRecipient
         )
     {
-        tokenRates[0][2] = 20;
-        tokenRates[0][4] = 100;
-        tokenRates[2][4] = 5;
-    }
-
-    function _dropMsgSender() internal view override returns (address) {
-        return msg.sender;
+        tokenValues[0] = 1;
+        tokenValues[2] = 20;
+        tokenValues[4] = 100;
     }
 
     function merge(
@@ -42,9 +38,9 @@ contract Manbow is ERC1155Drop {
         uint256 _materialId,
         uint256 _productId,
         uint256 _productQuantity
-    ) external payable {
-        uint256 burnQuantity = _productQuantity * tokenRates[_materialId][_productId];
-        _beforeMerge(_owner, _materialId, _productId, burnQuantity);
+    ) external {
+        _beforeMerge(_owner, _materialId, _productId, _productQuantity);
+        uint256 burnQuantity = _productQuantity * tokenValues[_productId] / tokenValues[_materialId];
 
         _burn(_owner, _materialId, burnQuantity);
         _mint(_owner, _productId, _productQuantity, "");
@@ -58,7 +54,7 @@ contract Manbow is ERC1155Drop {
         uint256,
         uint256
     ) internal view virtual {
-        if (_dropMsgSender() != _owner) {
+        if (msg.sender != _owner) {
             revert("Not eligible");
         }
     }
